@@ -1,0 +1,7 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="NewtonSolver/NewtonSolver.vcxproj" Id="5f6ebc2e-31d9-428a-8864-0ac0431ee97c" />
+</Solution>
