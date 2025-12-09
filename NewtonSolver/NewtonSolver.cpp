@@ -3,7 +3,6 @@
 
 #include "NewtonSolver.h"
 
-
 void SolveGauss(real** A, real* b, real*& x, int& n)
 {
     try
@@ -223,35 +222,24 @@ void NewtonSolver::ComputeJacobian()
         //cout << endl;
     }
 }
-void NewtonSolver::ComputeJacobianNumeric(real h)
+void NewtonSolver::ComputeJacobianNumeric(double hStep)
 {
     if (!J || !x) return;
-
     const double eps = std::numeric_limits<double>::epsilon();
+
+    vector<double> Fx_old(m);
+    for (int i = 0; i < m; ++i) Fx_old[i] = Fx[i];
 
     for (int j = 0; j < n; ++j)
     {
         double hLocal = sqrt(eps) * (1.0 + fabs(x[j]));
-        if (hLocal == 0.0) hLocal = h;
+        if (hStep > hLocal) hLocal = hStep;
 
         double old = x[j];
-
-        // ----- F(x + h) -----
-        x[j] = old + hLocal;
+        x[j] += hLocal;
+        ComputeF(); // Fx обновляется
         for (int i = 0; i < m; ++i)
-            J[i][j] = eq[i].F(x, n);       // сохраняем f_plus прямо в J
-
-        // ----- F(x - h) -----
-        x[j] = old - hLocal;
-        for (int i = 0; i < m; ++i)
-            J[i][j] -= eq[i].F(x, n);      // вычитаем f_minus
-
-        // центральная разность
-        double denom = 2.0 * hLocal;
-        for (int i = 0; i < m; ++i)
-            J[i][j] /= denom;
-
-        // восстановить аргумент
+            J[i][j] = (Fx[i] - Fx_old[i]) / hLocal;
         x[j] = old;
     }
 }
@@ -501,6 +489,7 @@ void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars)
     catch (std::exception& e)
     {
         cout << "Ошибка в методе Ньютона: " << e.what() << endl;
+        exit(0);
 	}
 }
 bool NewtonSolver::IsJacobianSingular(double tol)

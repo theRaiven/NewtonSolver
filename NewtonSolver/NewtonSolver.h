@@ -4,6 +4,7 @@
 #include <fstream>
 using namespace std;
 
+
 using real = double;
 using realS = double;
 const int accuracy = 15;

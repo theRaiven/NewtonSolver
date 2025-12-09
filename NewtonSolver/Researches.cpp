@@ -40,6 +40,38 @@ NewtonSolver::Equation* CreateCircleSystem(double x1, double y1, double r1,
 
     return eq;
 }
+NewtonSolver::Equation* CreateCirclePlusLineSystem(double x1, double y1, double r1,
+    double x2, double y2, double r2,
+    double k, double b) // параметры пр€мой y = k*x + b
+{
+    auto eq = new NewtonSolver::Equation[3];
+
+    // ѕерва€ окружность
+    eq[0].F = [=](const double* x, int) -> double {
+        return (x[0] - x1) * (x[0] - x1) + (x[1] - y1) * (x[1] - y1) - r1 * r1;
+        };
+    eq[0].dF = [=](const double* x, int, int j) -> double {
+        return j == 0 ? 2 * (x[0] - x1) : 2 * (x[1] - y1);
+        };
+
+    // ¬тора€ окружность
+    eq[1].F = [=](const double* x, int) -> double {
+        return (x[0] - x2) * (x[0] - x2) + (x[1] - y2) * (x[1] - y2) - r2 * r2;
+        };
+    eq[1].dF = [=](const double* x, int, int j) -> double {
+        return j == 0 ? 2 * (x[0] - x2) : 2 * (x[1] - y2);
+        };
+
+    // ѕр€ма€ y = k*x + b
+    eq[2].F = [=](const double* x, int) -> double {
+        return x[1] - k * x[0] - b;
+        };
+    eq[2].dF = [=](const double* x, int, int j) -> double {
+        return j == 0 ? -k : 1;
+        };
+
+    return eq;
+}
 
 // ќсновной тест
 void CircleIntersectionResearch()
@@ -47,19 +79,25 @@ void CircleIntersectionResearch()
     // ѕример: две окружности
     double x1 = 0, y1 = 0, r1 = 1;
     double x2 = 2.0, y2 = 0, r2 = 1; // не пересекаютс€
+    double k = 0.5, b = -0.5;         // пр€ма€ y = k*x + b
 
     NewtonSolver solver;
-    auto eq = CreateCircleSystem(x1, y1, r1, x2, y2, r2);
-    solver.AllocateMemory(2, 2);
-    solver.SetSystem(2, eq);
+    auto eq = CreateCirclePlusLineSystem(x1, y1, r1, x2, y2, r2, k, b);
+    solver.AllocateMemory(2, 3);   // 2 переменные, 3 уравнени€
+    solver.SetSystem(3, eq);
 
-    vector<vector<double>> initialGuesses = {
-        {0.5, 0.5},   // не на ос€х симметрии
-        {1.0, 0.0},   // на линии центров (точка касани€)
-        {0.5, 0.86603},   // на перпендикул€рной оси на равном рассто€нии
-        {1.0, 0.0}    // внутри первой окружности
+    vector<vector<double>> initialGuesses1 = {
+         {0.5, 0.5, 0.0},   // не на ос€х симметрии
+    {1.0, 0.0, 0.0},   // на линии центров
+    {1.0, 0.5, 0.0},   // на перпендикул€рной оси на равном рассто€нии
+    {2.0, 0.0, 0.0}    // внутри первой окружности
     };
-
+    vector<vector<double>> initialGuesses = {
+       {0.5, 0.5},
+       {1.0, 0.0},
+       {1.0, 0.5},
+       {2.0, 0.0}
+    };
     vector<vector<double>> solutions;
 
     solver.SetEps1(1e-15);
@@ -75,7 +113,7 @@ void CircleIntersectionResearch()
         cout << "Ќачальное приближение: ("
             << start[0] << ", " << start[1] << ")\n";
 
-        solver.NewtonSolve(true, true); // анал, вар2
+        solver.NewtonSolve(false, true); // анал, вар2
 
         // формируем массив x дл€ проверки
         double xArr[2] = { solver.GetX(0), solver.GetX(1) };
