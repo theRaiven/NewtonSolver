@@ -56,8 +56,8 @@ void CircleIntersectionResearch()
     vector<vector<double>> initialGuesses = {
         {0.5, 0.5},   // не на осях симметрии
         {1.0, 0.0},   // на линии центров (точка касания)
-        {1.0, 0.5},   // на перпендикулярной оси на равном расстоянии
-        {2.0, 0.0}    // внутри первой окружности
+        {0.5, 0.86603},   // на перпендикулярной оси на равном расстоянии
+        {1.0, 0.0}    // внутри первой окружности
     };
 
     vector<vector<double>> solutions;
@@ -75,15 +75,14 @@ void CircleIntersectionResearch()
         cout << "Начальное приближение: ("
             << start[0] << ", " << start[1] << ")\n";
 
-        solver.NewtonSolve(false, false); // числ, вар2
+        solver.NewtonSolve(true, true); // анал, вар2
 
         // формируем массив x для проверки
         double xArr[2] = { solver.GetX(0), solver.GetX(1) };
 
         IsNewSolution(solutions, xArr);
-            solutions.push_back({ xArr[0], xArr[1] });
-            cout << "Найдена новая точка пересечения: "
-                << fixed << setprecision(8) << xArr[0] << ", " << xArr[1] << endl;
+        solutions.push_back({ xArr[0], xArr[1] });
+        cout << "Найдена новая точка пересечения: " << fixed << setprecision(8) << xArr[0] << ", " << xArr[1] << endl;
         cout << string(50, '-') << endl << endl;
     }
 
