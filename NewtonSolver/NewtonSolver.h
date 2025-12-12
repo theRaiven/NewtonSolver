@@ -1,4 +1,6 @@
-﻿#pragma once
+﻿// NewtonSolver.h
+
+#pragma once
 #include <iostream>
 #include <functional>
 #include <fstream>
@@ -50,7 +52,8 @@ public:
     struct Equation 
     {
         Func F;  // F_i(x)
-        function<double(const double*, int, int)> dF; // ∂F_i/∂x_j
+        function<double(const double*, int, int)> dF; // dF_i/dx_j
+        double w = 1.0; // вес уравнения, по умолчанию 1
     };
 private:
     Equation* eq;

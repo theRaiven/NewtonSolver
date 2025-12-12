@@ -186,7 +186,7 @@ double NewtonSolver::Norm(real* a, int n)
 void NewtonSolver::ComputeF()
 {
     for (int i = 0; i < m; i++)
-        Fx[i] = eq[i].F(x, n);
+        Fx[i] = eq[i].w * eq[i].F(x, n);
 }
 void NewtonSolver::SetSystem(int mEquations, Equation* equations)
 {
@@ -216,7 +216,7 @@ void NewtonSolver::ComputeJacobian()
     {
         for (int j = 0; j < n; j++)
         {
-            J[i][j] = eq[i].dF(x, n, j);
+            J[i][j] = eq[i].w * eq[i].dF(x, n, j);
             //cout << J[i][j] << ' ';
         }
         //cout << endl;
@@ -463,7 +463,7 @@ void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars)
                 break;
             }
         }
-        if (normFk > 1e-6) // можно настраивать порог
+        if (normFk > 1e-1) // можно настраивать порог
         {
             cout << "Решений нет, ||F(x)|| = " << normFk << endl;
             for (int i = 0; i < n; i++)
@@ -472,7 +472,7 @@ void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars)
                 cout << "x[" << i << "] = NaN" << endl;
             }
         }
-        /*cout << "Цикл Ньютона завершен на " << k << "-й итерации. Информация по тесты:" << endl;
+        cout << "Цикл Ньютона завершен на " << k << "-й итерации" << endl;/*
         cout << "\tAquad:";
         for (int i = 0; i < n; i++) { cout << endl << "\t\t"; for (int j = 0; j < n; j++) cout << Aquad[i][j] << " "; }
         cout << "\n\tbquad: ";

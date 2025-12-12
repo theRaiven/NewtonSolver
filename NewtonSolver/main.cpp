@@ -6,6 +6,6 @@
 int main()
 {
 	setlocale(LC_ALL, "Russian");
-	CircleIntersectionResearch();
+	SinusoidLineResearch();
 }
 
