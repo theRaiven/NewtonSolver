@@ -221,7 +221,7 @@ void RunForStarts(NewtonSolver& solver,
 void CirclePlusLineResearch()
 {
     double x1 = 0.0, y1 = 0.0, r1 = 1.0;
-    double x2 = 1, y2 = 0.0, r2 = 1.0;
+    double x2 = 3, y2 = 0.0, r2 = 1.0;
     double k = 2, b = -0.5;
 
     NewtonSolver solver;
@@ -233,23 +233,23 @@ void CirclePlusLineResearch()
     System2D system;
     system.addCircle(x1, y1, r1)
           .addCircle(x2, y2, r2)
-          .addPerpendicularToOx(0.5);
+          //.addPerpendicularToOx(0.5);
         ;
     solver.SetSystem(system.equationsCount(),
         system.equationsFor(solver));
 
     double starts[4][2] = {
-        {0.5, -0.5},
-        {1.0, 0.0},
-        {0.5, 0.0},
+        {0.5, 0.5},
+        {1.5, 0.0},
+        {1.5, 1.0},
         {0.0, 0.0}
     };
     
     double weightSets[][3] = {
         {1.0, 1.0, 1.0},   // без взвешивания
-        {10.0, 1.0, 1.0},  // первая окружность важнее
-        {1.0, 10.0, 1.0},  // вторая окружность важнее
-        {1.0, 1.0, 10.0}   // прямая важнее
+        //{1.0, 1.0, 1.0},  // первая окружность важнее
+        //{1.0, 1.0, 1.0},  // вторая окружность важнее
+        //{1.0, 1.0, 1.0}   // прямая важнее
     };
     const int numWeightSets = sizeof(weightSets) / sizeof(weightSets[0]);
 
@@ -267,9 +267,9 @@ void CirclePlusLineResearch()
         solver.SetSystem(system.equationsCount(),
             system.equationsFor(solver));
 
-        /*RunForStarts(solver, starts, 4,
+        RunForStarts(solver, starts, 4,
             true, true,
-            "Вариант 1: аналитический Якобиан");*/
+            "Вариант 1: аналитический Якобиан");
 
         RunForStarts(solver, starts, 4,
             true, false,

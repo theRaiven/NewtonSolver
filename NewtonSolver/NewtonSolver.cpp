@@ -468,8 +468,8 @@ void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars)
             cout << "Решений нет, ||F(x)|| = " << normFk << endl;
             for (int i = 0; i < n; i++)
             {
-                x[i] = std::numeric_limits<double>::quiet_NaN();
-                cout << "x[" << i << "] = NaN" << endl;
+                //x[i] = std::numeric_limits<double>::quiet_NaN();
+                // cout << "x[" << i << "] = NaN" << endl;
             }
         }
         cout << "Цикл Ньютона завершен на " << k << "-й итерации" << endl;/*
