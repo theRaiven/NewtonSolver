@@ -2,6 +2,7 @@
 //
 
 #include "NewtonSolver.h"
+#include <iomanip>
 
 void SolveGauss(real** A, real* b, real*& x, int& n)
 {
@@ -392,8 +393,22 @@ double NewtonSolver::FindBeta()
     delete[] xTemp;
     return beta;
 }
-void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars)
+void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars, string logFileName)
 {
+    ofstream logFile;
+
+    if (!logFileName.empty())
+    {
+        logFile.open(logFileName);
+        logFile.imbue(std::locale("C"));
+        logFile << scientific << setprecision(16);
+        logFile << "Iter;Beta;NormF";
+        for (int i = 0; i < n; i++)
+        {
+            logFile << ";x_" << i;
+        }
+        logFile << endl;
+    }
     // начальное вычисление F(x^0)
     //cout << string(50, '=') << endl;
     try
@@ -401,6 +416,14 @@ void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars)
         ComputeF();
         double normF0 = Norm(Fx, m);  // норма начального F
         double normFk = normF0;
+
+        if (logFile.is_open())
+        {
+            logFile << 0 << ";" << 0.0 << ";" << normF0;
+            for (int i = 0; i < n; i++) logFile << ";" << x[i];
+            logFile << endl;
+        }
+
         int k;
         for (k = 0; k < maxIter; k++)
         {
@@ -441,15 +464,15 @@ void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars)
             ComputeF();
             normFk = Norm(Fx, m);
 
-            /*cout << "Норма F = " << normFk << endl;
-            cout << "Текущее x: ";
-            for (int i = 0; i < n; i++)
-                cout << x[i] << " ";
-            cout << endl;
-            cout << "deltaX = ";
-            for (int i = 0; i < n; i++) cout << deltaX[i] << " ";*/
-
-            //cout << endl << endl;
+            if (logFile.is_open())
+            {
+                logFile << (k + 1) << ";" << beta << ";" << normFk;
+                for (int i = 0; i < n; i++)
+                {
+                    logFile << ";" << x[i];
+                }
+                logFile << endl;
+            }
 
             // 8. Критерии выхода
             if (beta < eps1)
@@ -463,6 +486,7 @@ void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars)
                 break;
             }
         }
+        if (logFile.is_open()) logFile.close();
         if (normFk > 1e-1) // можно настраивать порог
         {
             cout << "Решений нет, ||F(x)|| = " << normFk << endl;
@@ -488,6 +512,7 @@ void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars)
     }
     catch (std::exception& e)
     {
+        if (logFile.is_open()) logFile.close();
         cout << "Ошибка в методе Ньютона: " << e.what() << endl;
         exit(0);
 	}

@@ -122,6 +122,6 @@ public:
     
     void SolveDeltaX(const int* selected, bool isVariant1);
     double FindBeta();
-    void NewtonSolve(bool useAnalyticJacobian = true, bool selectVars = true); // и собственно, тот, из-за кого мы все здесь собрались 
+    void NewtonSolve(bool useAnalyticJacobian = true, bool selectVars = true, string logFileName = ""); // и собственно, тот, из-за кого мы все здесь собрались 
 
 };

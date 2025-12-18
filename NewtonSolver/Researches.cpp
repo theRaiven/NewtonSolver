@@ -2,6 +2,8 @@
 
 
 #include "Researches.h"
+#include <string>
+#include <algorithm>
 
 const double EPS = 1e-8;
 
@@ -199,14 +201,25 @@ void RunForStarts(NewtonSolver& solver,
 
     PrintHeader(title);
 
+    string cleanTitle = title;
+    auto is_bad_char = [](char c) {
+        return c == ' ' || c == ':' || c == ',' || c == '(' || c == ')' || c == '/';
+        };
+    replace_if(cleanTitle.begin(), cleanTitle.end(), is_bad_char, '_');
+
+    string::iterator new_end = unique(cleanTitle.begin(), cleanTitle.end(),
+        [](char a, char b) { return a == '_' && b == '_'; });
+    cleanTitle.erase(new_end, cleanTitle.end());
+
     for (s = 0; s < count; ++s)
     {
         // задаём начальное приближение
         solver.SetX(0, starts[s][0]);
         solver.SetX(1, starts[s][1]);
-
+        string filename = "result_" + cleanTitle + "_start" + to_string(s) + ".csv";
+        cout << "Старт #" << s << " -> " << filename << endl;
         // решаем
-        solver.NewtonSolve(useAnalyticJacobian, useVariant1);
+        solver.NewtonSolve(useAnalyticJacobian, useVariant1, filename);
 
         cout << "Начальное приближение: ("
             << starts[s][0] << ", " << starts[s][1] << ")"
