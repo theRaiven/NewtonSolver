@@ -399,7 +399,7 @@ void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars, string
 
     if (!logFileName.empty())
     {
-        logFile.open(logFileName);
+        logFile.open(logFileName, std::ios::app);
         logFile.imbue(std::locale("C"));
         logFile << scientific << setprecision(16);
         logFile << "Iter;Beta;NormF";
@@ -514,7 +514,6 @@ void NewtonSolver::NewtonSolve(bool useAnalyticJacobian, bool selectVars, string
     {
         if (logFile.is_open()) logFile.close();
         cout << "Ошибка в методе Ньютона: " << e.what() << endl;
-        exit(0);
 	}
 }
 bool NewtonSolver::IsJacobianSingular(double tol)

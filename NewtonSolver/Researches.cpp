@@ -4,7 +4,7 @@
 #include "Researches.h"
 #include <string>
 #include <algorithm>
-
+const string GLOBAL_FILENAME = "100 ебанных исследований нахуй.csv";
 const double EPS = 1e-8;
 
 struct ICurve2D
@@ -197,45 +197,49 @@ void RunForStarts(NewtonSolver& solver,
     bool useVariant1,
     const char* title)
 {
-    int s;
-
     PrintHeader(title);
 
-    string cleanTitle = title;
-    auto is_bad_char = [](char c) {
-        return c == ' ' || c == ':' || c == ',' || c == '(' || c == ')' || c == '/';
-        };
-    replace_if(cleanTitle.begin(), cleanTitle.end(), is_bad_char, '_');
-
-    string::iterator new_end = unique(cleanTitle.begin(), cleanTitle.end(),
-        [](char a, char b) { return a == '_' && b == '_'; });
-    cleanTitle.erase(new_end, cleanTitle.end());
-
-    for (s = 0; s < count; ++s)
     {
-        // задаём начальное приближение
-        solver.SetX(0, starts[s][0]);
-        solver.SetX(1, starts[s][1]);
-        string filename = "result_" + cleanTitle + "_start" + to_string(s) + ".csv";
-        cout << "Старт #" << s << " -> " << filename << endl;
-        // решаем
-        solver.NewtonSolve(useAnalyticJacobian, useVariant1, filename);
-
-        cout << "Начальное приближение: ("
-            << starts[s][0] << ", " << starts[s][1] << ")"
-            << " - точка пересечения: (" << scientific << setprecision(15)
-            << solver.GetX(0) << ", " << solver.GetX(1) << ")"
-            << endl << endl << fixed << setprecision(1);
+        ofstream f(GLOBAL_FILENAME, std::ios::app);
+        f.imbue(std::locale("C")); // Точки вместо запятых
+        f << "\n\n"
+            << "========================================================\n"
+            << "EXPERIMENT: " << title << "\n"
+            << "Method: " << (useAnalyticJacobian ? "Analytic" : "Numeric")
+            << " | Variant: " << (useVariant1 ? "1 (Vars)" : "2 (Eqs)") << "\n"
+            << "========================================================\n";
     }
 
-    cout << std::string(50, '=') << std::endl << std::endl;
-}
+    for (int s = 0; s < count; ++s)
+    {
+        solver.SetX(0, starts[s][0]);
+        solver.SetX(1, starts[s][1]);
 
-void CirclePlusLineResearch()
+        {
+            ofstream f(GLOBAL_FILENAME, std::ios::app);
+            f << "\n--- Start Point #" << s << " (" << starts[s][0] << ", " << starts[s][1] << ") ---\n";
+        }
+
+        cout << "Старт #" << s << ". Пишем в общий файл..." << endl;
+
+        // Передаем имя общего файла.
+        // Так как мы поправили NewtonSolver.cpp на ios::app, оно допишется в конец.
+        solver.NewtonSolve(useAnalyticJacobian, useVariant1, GLOBAL_FILENAME);
+
+        cout << "Результат: (" << scientific << setprecision(5)
+            << solver.GetX(0) << ", " << solver.GetX(1) << ")" << endl << endl;
+    }
+}
+string CleanTitle(string title)
 {
-    double x1 = 0.0, y1 = 0.0, r1 = 1.0;
-    double x2 = 3, y2 = 0.0, r2 = 1.0;
-    double k = 2, b = -0.5;
+    replace_if(title.begin(), title.end(), [](char c)
+        {
+        return c == ' ' || c == ':' || c == ',' || c == '(' || c == ')' || c == '/';
+        }, '_');
+    return title;
+}
+void CirclePlusLineResearch(double x1, double y1, double r1, double x2, double y2, double r2, double k, double b)
+{
 
     NewtonSolver solver;
     solver.AllocateMemory(2, 3);
@@ -246,7 +250,7 @@ void CirclePlusLineResearch()
     System2D system;
     system.addCircle(x1, y1, r1)
           .addCircle(x2, y2, r2)
-          //.addPerpendicularToOx(0.5);
+          .addLine(k, b);
         ;
     solver.SetSystem(system.equationsCount(),
         system.equationsFor(solver));
@@ -293,14 +297,70 @@ void CirclePlusLineResearch()
             "Вариант 6: численный Якобиан");
     }
 }
-void ThreeLineWithWeight()
+void CirclePlusLineResearch(double x1, double y1, double r1, double x2, double y2, double r2)
+{
+
+    NewtonSolver solver;
+    solver.AllocateMemory(2, 3);
+    solver.SetEps1(1e-15);
+    solver.SetEps2(1e-15);
+    solver.SetMaxIter(50);
+
+    System2D system;
+    system.addCircle(x1, y1, r1)
+        .addCircle(x2, y2, r2);
+
+    solver.SetSystem(system.equationsCount(),
+        system.equationsFor(solver));
+
+    double starts[4][2] = {
+        {0.5, 0.5},
+        {1.5, 0.0},
+        {1.5, 1.0},
+        {0.0, 0.0}
+    };
+
+    double weightSets[][3] = {
+        {1.0, 1.0, 1.0},   // без взвешивания
+        //{1.0, 1.0, 1.0},  // первая окружность важнее
+        //{1.0, 1.0, 1.0},  // вторая окружность важнее
+        //{1.0, 1.0, 1.0}   // прямая важнее
+    };
+    const int numWeightSets = sizeof(weightSets) / sizeof(weightSets[0]);
+
+    for (int w = 0; w < numWeightSets; ++w)
+    {
+        // задаём веса для трёх уравнений
+        system.setWeights(weightSets[w], 3);
+
+        cout << "Веса уравнений: ["
+            << weightSets[w][0] << ", "
+            << weightSets[w][1] << ", "
+            << weightSets[w][2] << "]" << endl;
+
+        // пересобираем систему с учётом весов
+        solver.SetSystem(system.equationsCount(),
+            system.equationsFor(solver));
+
+        RunForStarts(solver, starts, 4,
+            true, true,
+            "Вариант 1: аналитический Якобиан");
+
+        RunForStarts(solver, starts, 4,
+            true, false,
+            "Вариант 2: аналитический Якобиан");
+
+        RunForStarts(solver, starts, 4,
+            false, false,
+            "Вариант 6: численный Якобиан");
+    }
+}
+void ThreeLineWithWeight(double* k, double* b, double** weightSets)
 {
     // Три попарно пересекающиеся прямые:
      // L1: y = -2x + 4
      // L2: y = x + 1
      // L3: y = 1        (горизонтальная)
-    double k[3] = { -2.0,  1.0, 0.0 };
-    double b[3] = { 4.0,  1.0, 1.0 };
 
     double starts[4][2] = {
         {0.0, 0.0},
@@ -309,11 +369,11 @@ void ThreeLineWithWeight()
         {3.0, 2.0}
     };
     // Наборы весов для пары прямых: [w1, w2]
-    double weightSets[][2] = {
-        {1.0, 1.0},       // без взвешивания
-        {10000.0, 1.0},   // первая прямая важнее
-        {1.0, 10000.0}    // вторая прямая важнее
-    };
+    //double weightSets[][2] = {
+    //    {1.0, 1.0},       // без взвешивания
+    //    {10000.0, 1.0},   // первая прямая важнее
+    //    {1.0, 10000.0}    // вторая прямая важнее
+    //};
     const int numWeightSets = sizeof(weightSets) / sizeof(weightSets[0]);
 
     NewtonSolver solver;
@@ -416,4 +476,48 @@ void SinusoidLineResearch()
     RunForStarts(solver, starts, 6,
         false, false,
         "Синусоида + прямая, вариант 6 (численный Якобиан)");
+}
+
+void ResearchVerticalLine()
+{
+    cout << "\n=== ИССЛЕДОВАНИЕ: Окружности + Вертикальная прямая x=0.5 ===\n";
+
+    NewtonSolver solver;
+    solver.AllocateMemory(2, 3);
+    solver.SetEps1(1e-15);
+    solver.SetEps2(1e-15);
+    solver.SetMaxIter(50);
+
+    System2D system;
+    system.addCircle(0.0, 0.0, 1.0)       // x^2 + y^2 = 1
+        .addCircle(1.0, 0.0, 1.0)       // (x-1)^2 + y^2 = 1
+        .addPerpendicularToOx(0.5);     // x = 0.5
+
+    solver.SetSystem(system.equationsCount(), system.equationsFor(solver));
+
+    // Начальные точки (берем разные, чтобы проверить сходимость)
+    double starts[4][2] = {
+        {0.5, 0.5},   // Точка вблизи решения
+        {0.0, 0.0},   // Центр первой
+        {1.0, 0.0},   // Центр второй
+        {0.5, 2.0}    // Далеко сверху
+    };
+
+
+    for (int s = 0; s < 4; ++s)
+    {
+        solver.SetX(0, starts[s][0]);
+        solver.SetX(1, starts[s][1]);
+
+        string filename = "result_VerticalLine_start" + to_string(s) + ".csv";
+        cout << "Старт #" << s << " -> " << filename << endl;
+
+        // Используем Вариант 2 (SelectEquations), так как m(3) > n(2)
+        // Вариант 1 тут упадет с ошибкой
+        solver.NewtonSolve(true, false, filename);
+
+        cout << "Начало: (" << starts[s][0] << ", " << starts[s][1] << ") -> "
+            << "Итог: (" << scientific << setprecision(5)
+            << solver.GetX(0) << ", " << solver.GetX(1) << ")" << endl << endl;
+    }
 }
